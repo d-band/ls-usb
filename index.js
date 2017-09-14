@@ -41,11 +41,16 @@ function parseMedia(xml) {
 function getMediaList(callback) {
   const cmd = 'system_profiler -xml SPUSBDataType';
   if (callback) {
-    shell.exec(cmd, { silent: true }, (code, stdout) => {
-      callback(parseMedia(stdout));
+    shell.exec(cmd, { silent: true }, (code, stdout, stderr) => {
+      if (code) {
+        callback(new Error(stderr), null);
+      } else {
+        callback(null, parseMedia(stdout));
+      }
     });
   } else {
     const res = shell.exec(cmd, { silent: true });
+    if (res.code) return null;
     return parseMedia(res.stdout);
   }
 }
