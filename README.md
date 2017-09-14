@@ -18,7 +18,7 @@ $ npm install ls-usb
 ## Usage
 
 ```javascript
-const getMediaList = require('./index');
+const getMediaList = require('ls-usb');
 const list = getMediaList();
 console.log(JSON.stringify(list, null, '  '));
 
