@@ -1,0 +1,29 @@
+{
+  "name": "ls-usb",
+  "version": "0.0.1",
+  "description": "list usb storage",
+  "main": "index.js",
+  "scripts": {
+    "test": "node test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/d-band/ls-usb.git"
+  },
+  "keywords": [
+    "maxOS",
+    "list",
+    "usb",
+    "storage"
+  ],
+  "author": "d-band",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/d-band/ls-usb/issues"
+  },
+  "homepage": "https://github.com/d-band/ls-usb#readme",
+  "dependencies": {
+    "fast-plist": "^0.1.2",
+    "shelljs": "^0.7.8"
+  }
+}
