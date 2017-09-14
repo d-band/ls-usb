@@ -1,12 +1,9 @@
 const plist = require('fast-plist');
 const shell = require('shelljs');
 
-function getMediaList() {
-  const res = shell.exec('system_profiler -xml SPUSBDataType', {
-    silent: true
-  });
-  const data = plist.parse(res.stdout);
-  const medias = [];
+function parseMedia(xml) {
+  const data = plist.parse(xml);
+  const list = [];
   if (data.length && data[0]._items && data[0]._items.length) {
     data[0]._items.forEach(device => {
       if (!device._items) return;
@@ -32,13 +29,25 @@ function getMediaList() {
             writable: v.writable === 'yes'
           }));
           if (tmp.volumes.length) {
-            medias.push(tmp);
+            list.push(tmp);
           }
         });
       });
     });
   }
-  return medias;
+  return list;
+}
+
+function getMediaList(callback) {
+  const cmd = 'system_profiler -xml SPUSBDataType';
+  if (callback) {
+    shell.exec(cmd, { silent: true }, (code, stdout) => {
+      callback(parseMedia(stdout));
+    });
+  } else {
+    const res = shell.exec(cmd, { silent: true });
+    return parseMedia(res.stdout);
+  }
 }
 
 module.exports = getMediaList;
