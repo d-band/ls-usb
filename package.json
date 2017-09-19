@@ -1,6 +1,6 @@
 {
   "name": "ls-usb",
-  "version": "0.0.2",
+  "version": "0.1.0",
   "description": "list usb storage",
   "main": "index.js",
   "scripts": {
@@ -23,7 +23,6 @@
   },
   "homepage": "https://github.com/d-band/ls-usb#readme",
   "dependencies": {
-    "fast-plist": "^0.1.2",
-    "shelljs": "^0.7.8"
+    "fast-plist": "^0.1.2"
   }
 }

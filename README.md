@@ -19,53 +19,53 @@ $ npm install ls-usb
 
 ```javascript
 const getMediaList = require('ls-usb');
-const list = getMediaList();
-console.log(JSON.stringify(list, null, '  '));
 
-/**
- * output:
- *
- * [
- *   {
- *     "name": "Flash Disk",
- *     "path": "/dev/disk2",
- *     "size": "4.03 GB",
- *     "size_bytes": 4026531840,
- *     "volumes": [
- *       {
- *         "name": "Media A",
- *         "path": "/dev/disk2s4",
- *         "type": "NTFS",
- *         "size": "4.03 GB",
- *         "size_bytes": 4026467328,
- *         "free": "4.01 GB",
- *         "free_bytes": 4011507712,
- *         "mount": "/Volumes/Media A",
- *         "writable": false
- *       }
- *     ]
- *   },
- *   {
- *     "name": "TransMemory",
- *     "path": "/dev/disk3",
- *     "size": "7.8 GB",
- *     "size_bytes": 7803174912,
- *     "volumes": [
- *       {
- *         "name": "NO NAME",
- *         "path": "/dev/disk3s1",
- *         "type": "MS-DOS FAT32",
- *         "size": "7.8 GB",
- *         "size_bytes": 7803142656,
- *         "free": "4.89 GB",
- *         "free_bytes": 4886757376,
- *         "mount": "/Volumes/NO NAME",
- *         "writable": true
- *       }
- *     ]
- *   }
- * ]
- */
+getMediaList()
+  .then(data => {
+    console.log(JSON.stringify(data, null, '  '));
+  });
+
+/*[{
+  "udid": "disk2",
+  "name": "UDisk",
+  "type": "Generic",
+  "node": "/dev/disk2",
+  "size": "15.9 GB",
+  "size_bytes": 15938355200,
+  "volumes": [{
+    "udid": "disk2",
+    "mount": "/Volumes/DBand",
+    "size": "15.9 GB",
+    "size_bytes": 15938355200,
+    "name": "DBand",
+    "node": "/dev/disk2",
+    "fs_type": "msdos",
+    "fs_name": "MS-DOS FAT32",
+    "free": "15.9 GB",
+    "free_bytes": 15914958848,
+    "writable": true
+  }]
+}, {
+  "udid": "disk3",
+  "name": "Flash Disk",
+  "type": "Generic",
+  "node": "/dev/disk3",
+  "size": "4.0 GB",
+  "size_bytes": 4026531840,
+  "volumes": [{
+    "udid": "disk3s4",
+    "mount": "/Volumes/Untitled",
+    "size": "4.0 GB",
+    "size_bytes": 4026467328,
+    "name": "Untitled",
+    "node": "/dev/disk3s4",
+    "fs_type": "ntfs",
+    "fs_name": "NTFS",
+    "free": "4.0 GB",
+    "free_bytes": 4011507712,
+    "writable": false
+  }]
+}]*/
 ```
 
 ## Report a issue

@@ -1,58 +1,100 @@
 const plist = require('fast-plist');
-const shell = require('shelljs');
+const cp = require('child_process');
 
-function parseMedia(xml) {
-  const data = plist.parse(xml);
-  const list = [];
-  if (data.length && data[0]._items && data[0]._items.length) {
-    data[0]._items.forEach(device => {
-      if (!device._items) return;
-      device._items.forEach(media => {
-        if (!media.Media) return;
-        media.Media.forEach(item => {
-          if (!item.removable_media) return;
-          const tmp = {
-            name: item._name,
-            path: `/dev/${item.bsd_name}`,
-            size: item.size,
-            size_bytes: item.size_in_bytes
-          };
-          tmp.volumes = (item.volumes || []).map(v => ({
-            name: v._name,
-            path: `/dev/${v.bsd_name}`,
-            type: v.file_system,
-            size: v.size,
-            size_bytes: v.size_in_bytes,
-            free: v.free_space,
-            free_bytes: v.free_space_in_bytes,
-            mount: v.mount_point,
-            writable: v.writable === 'yes'
-          }));
-          if (tmp.volumes.length) {
-            list.push(tmp);
-          }
-        });
-      });
-    });
-  }
-  return list;
+function execAsync(cmd) {
+  return new Promise((resolve, reject) => {
+    cp.exec(cmd, (err, stdout) => {
+      if (err) return reject(err);
+      return resolve(stdout);
+    })
+  });
 }
 
-function getMediaList(callback) {
-  const cmd = 'system_profiler -xml SPUSBDataType';
-  if (callback) {
-    shell.exec(cmd, { silent: true }, (code, stdout, stderr) => {
-      if (code) {
-        callback(new Error(stderr), null);
-      } else {
-        callback(null, parseMedia(stdout));
+function execWithParse(cmd) {
+  return execAsync(cmd).then(plist.parse);
+}
+
+function humanFileSize(bytes, si) {
+  const thresh = si ? 1000 : 1024;
+  if (Math.abs(bytes) < thresh) {
+    return bytes + ' B';
+  }
+  const units = si
+    ? ['kB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB']
+    : ['KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB', 'ZiB', 'YiB'];
+  let u = -1;
+  do {
+    bytes /= thresh;
+    ++u;
+  } while (Math.abs(bytes) >= thresh && u < units.length - 1);
+  return bytes.toFixed(1) + ' ' + units[u];
+}
+
+function getMediaList() {
+  return execWithParse('diskutil list -plist external').then(data => {
+    const temp = {};
+    const disks = data.WholeDisks.map((udid, index) => {
+      temp[udid] = index;
+      return {
+        udid,
+        volumes: []
+      };
+    });
+    data.AllDisksAndPartitions.forEach(disk => {
+      const udid = disk.DeviceIdentifier;
+      if (disk.Partitions) {
+        disks[temp[udid]].volumes = disk.Partitions.map(v => ({
+          udid: v.DeviceIdentifier,
+          mount: v.MountPoint,
+          size: humanFileSize(v.Size, true),
+          size_bytes: v.Size,
+          name: v.VolumeName
+        }));
+      } else if (disk.MountPoint && disk.VolumeName) {
+        disks[temp[udid]].volumes.push({
+          udid: udid,
+          mount: disk.MountPoint,
+          size: humanFileSize(disk.Size, true),
+          size_bytes: disk.Size,
+          name: disk.VolumeName
+        });
       }
     });
-  } else {
-    const res = shell.exec(cmd, { silent: true });
-    if (res.code) return null;
-    return parseMedia(res.stdout);
-  }
+    return Promise.all(
+      data.AllDisks.map(v => execWithParse(`diskutil info -plist ${v}`))
+    ).then(infoList => {
+      const infoMap = infoList.reduce((prev, cur) => {
+        prev[cur.DeviceIdentifier] = cur;
+        return prev;
+      }, {});
+      return disks.map(disk => {
+        const udid = disk.udid;
+        const info = infoMap[udid] || {};
+        return {
+          udid,
+          name: info.MediaName,
+          type: info.MediaType,
+          node: info.DeviceNode,
+          size: humanFileSize(info.Size, true),
+          size_bytes: info.Size,
+          volumes: disk.volumes.map(v => {
+            const vinfo = infoMap[v.udid] || {};
+            return Object.assign(v, {
+              node: vinfo.DeviceNode,
+              fs_type: vinfo.FilesystemType,
+              fs_name: vinfo.FilesystemName,
+              free: humanFileSize(vinfo.FreeSpace, true),
+              free_bytes: vinfo.FreeSpace,
+              writable: vinfo.Writable
+            });
+          })
+        };
+      });
+    });
+  });
 }
 
-module.exports = getMediaList;
+exports = module.exports = getMediaList;
+exports.execAsync = execAsync;
+exports.execWithParse = execWithParse;
+exports.humanFileSize = humanFileSize;
